@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración</title>
+    <style>
+                 /* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #1e90ff, #00c6ff);
+    color: white;
+}
+
+/* Contenedor */
+.container {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Input */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    outline: none;
+    transition: 0.3s;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+input:focus {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Botón */
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background: #00c6ff;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #1e90ff;
+    transform: scale(1.05);
+}
+
+/* Mensaje */
+#mensaje {
+    margin-top: 15px;
+    font-size: 14px;
+    font-weight: bold;
+}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Solicitudes de Registro</h2>
+        <div id="usuariosLista"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js");
+  const { getAuth, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js");
+  const { getFirestore, collection, getDocs, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js");
+
+  // Configuración de Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXvmZ6TQjsLxGr-2O_77lm1ixc423fwKE",
+    authDomain: "fake-973bf.firebaseapp.com",
+    projectId: "fake-973bf",
+    storageBucket: "fake-973bf.appspot.com",
+    messagingSenderId: "828661098731",
+    appId: "1:828661098731:web:8b64621dd3f1ef446536ae",
+    measurementId: "G-L562CGLC0F"
+  };
+
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Función para obtener usuarios pendientes
+  async function cargarUsuariosPendientes() {
+    const usuariosLista = document.getElementById("usuariosLista");
+    usuariosLista.innerHTML = "<h2>Usuarios Pendientes</h2>";
+
+    try {
+      const querySnapshot = await getDocs(collection(db, "usuarios"));
+      let usuariosHTML = "<ul>";
+
+      querySnapshot.forEach((docSnap) => {
+        const usuario = docSnap.data();
+        if (usuario.estado === "pendiente") {
+          usuariosHTML += `
+            <li>
+              ${usuario.correo} - Estado: ${usuario.estado}
+              <button onclick="actualizarEstadoUsuario('${docSnap.id}', 'aprobado')">✅ Aceptar</button>
+              <button onclick="actualizarEstadoUsuario('${docSnap.id}', 'rechazado')">❌ Rechazar</button>
+            </li>
+          `;
+        }
+      });
+
+      usuariosHTML += "</ul>";
+      usuariosLista.innerHTML += usuariosHTML;
+
+    } catch (error) {
+      console.error("Error al leer Firestore:", error);
+    }
+  }
+
+  // Función para actualizar estado de usuario
+  window.actualizarEstadoUsuario = async (usuarioId, nuevoEstado) => {
+    try {
+      const usuarioRef = doc(db, "usuarios", usuarioId);
+      await updateDoc(usuarioRef, { estado: nuevoEstado });
+
+      alert(`Usuario actualizado a ${nuevoEstado}`);
+      cargarUsuariosPendientes(); // Recargar la lista
+
+    } catch (error) {
+      console.error("Error al actualizar usuario:", error);
+    }
+  };
+
+  // Verificar autenticación
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("Usuario autenticado:", user.email);
+      cargarUsuariosPendientes();
+    } else {
+      console.log("Usuario no autenticado. Redirigiendo...");
+      window.location.href = "login.html";
+    }
+  });
+});
+    </script>
+
+</body>
+</html></html>
